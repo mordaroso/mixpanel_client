@@ -3,7 +3,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe Mixpanel::Client do
   before :all do
     @client = Mixpanel::Client.new(
-      api_key: 'test_key',
       api_secret: 'test_secret'
     )
 
@@ -13,14 +12,12 @@ describe Mixpanel::Client do
   context 'when initializing a new Mixpanel::Client' do
     it 'should set a parallel option as false by default' do
       Mixpanel::Client.new(
-        api_key: 'test_key',
         api_secret: 'test_secret'
       ).parallel.should eq false
     end
 
     it 'should be able to set a parallel option when passed' do
       Mixpanel::Client.new(
-        api_key: 'test_key',
         api_secret: 'test_secret',
         parallel: true
       ).parallel.should eq true
@@ -28,14 +25,12 @@ describe Mixpanel::Client do
 
     it 'should set a timeout option as nil by default' do
       Mixpanel::Client.new(
-        api_key: 'test_key',
         api_secret: 'test_secret'
       ).timeout.should be_nil
     end
 
     it 'should be able to set a timeout option when passed' do
       Mixpanel::Client.new(
-        api_key: 'test_key',
         api_secret: 'test_secret',
         timeout: 3
       ).timeout.should eql 3
@@ -43,19 +38,9 @@ describe Mixpanel::Client do
   end
 
   context 'when making an invalid request' do
-    it 'should raise an error when API key is null' do
-      expect do
-        Mixpanel::Client.new(
-          api_key:    nil,
-          api_secret: 'test_secret'
-        )
-      end.to raise_error
-    end
-
     it 'should raise an error when API secret is null' do
       expect do
         Mixpanel::Client.new(
-          api_key:    'test_key',
           api_secret: nil
         )
       end.to raise_error
@@ -116,7 +101,6 @@ describe Mixpanel::Client do
       data = @client.request(
         'import',
         data: 'base64_encoded_data',
-        api_key: 'test_key'
       )
 
       data.should == [1]
@@ -180,26 +164,11 @@ describe Mixpanel::Client do
           'type'   => 'general'
         )
       end
-
-      specify 'Mixpanel::URI instance should receive the custom expiry time in
-               the options[:expiry] instead of 600s' do
-        Mixpanel::URI.should_receive(:mixpanel) do |*args|
-          args.pop[:expire].should eq expiry.to_i
-          true
-        end.and_return(fake_url)
-
-        @client.request(
-          'events/top',
-          type: 'general',
-          expire: expiry
-        )
-      end
     end
 
     context 'with parallel option enabled' do
       before :all do
         @parallel_client = Mixpanel::Client.new(
-          api_key: 'test_key',
           api_secret: 'test_secret',
           parallel: true
         )
@@ -317,25 +286,6 @@ describe Mixpanel::Client do
           )
         end
       end
-    end
-  end
-
-  describe '#hash_args' do
-    it 'should return a hashed string alpha sorted by key names.' do
-      args              = { c: 'see', a: 'ey', d: 'dee', b: 'bee' }
-      args_alpha_sorted = { a: 'ey', b: 'bee', c: 'see', d: 'dee' }
-
-      unsorted_signature = Mixpanel::Client::Utils.generate_signature(
-        args,
-        @client.api_secret
-      )
-
-      sorted_signature = Mixpanel::Client::Utils.generate_signature(
-        args_alpha_sorted,
-        @client.api_secret
-      )
-
-      unsorted_signature.should eq sorted_signature
     end
   end
 

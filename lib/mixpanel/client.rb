@@ -14,22 +14,21 @@ module Mixpanel
     IMPORT_URI = 'https://api.mixpanel.com'
 
     attr_reader :uri
-    attr_accessor :api_key, :api_secret, :parallel, :timeout
+    attr_accessor :api_secret, :parallel, :timeout
 
     # Configure the client
     #
     # @example
-    #   config = {api_key: '123', api_secret: '456'}
+    #   config = {api_secret: '456'}
     #   client = Mixpanel::Client.new(config)
     #
-    # @param [Hash] config consisting of an 'api_key' and an 'api_secret'
+    # @param [Hash] config consisting of an 'api_secret'
     def initialize(config)
-      @api_key    = config[:api_key]
       @api_secret = config[:api_secret]
       @parallel   = config[:parallel] || false
       @timeout    = config[:timeout] || nil
 
-      fail ConfigurationError if @api_key.nil? || @api_secret.nil?
+      fail ConfigurationError if @api_secret.nil?
     end
 
     # Return mixpanel data as a JSON object or CSV string
@@ -64,7 +63,7 @@ module Mixpanel
     end
 
     def make_normal_request(resource)
-      response = URI.get(@uri, @timeout)
+      response = URI.get(@uri, @timeout, @api_secret)
 
       if %w(export import).include?(resource) && @format != 'raw'
         response = %([#{response.split("\n").join(',')}])
@@ -94,7 +93,7 @@ module Mixpanel
     # @return   [JSON, String] mixpanel response as a JSON object or CSV string
     def request_uri(resource, options = {})
       @format = options[:format] || :json
-      URI.mixpanel(resource, normalize_options(options))
+      URI.mixpanel(resource, options)
     end
 
     # rubocop:disable MethodLength
@@ -134,24 +133,6 @@ module Mixpanel
     end
 
     private
-
-    # Return a hash of options along with defaults and a generated signature
-    #
-    # @return [Hash] collection of options including defaults and generated
-    #         signature
-    def normalize_options(options)
-      normalized_options = options.dup
-
-      normalized_options
-        .merge!(
-          format:  @format,
-          api_key: @api_key,
-          expire:  request_expires_at(normalized_options)
-        )
-        .merge!(
-          sig: Utils.generate_signature(normalized_options, @api_secret)
-        )
-    end
 
     def request_expires_at(options)
       ten_minutes_from_now = Time.now.to_i + 600

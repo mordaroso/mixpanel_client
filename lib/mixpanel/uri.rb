@@ -18,8 +18,12 @@ module Mixpanel
       params.map { |key, val| "#{key}=#{CGI.escape(val.to_s)}" }.sort.join('&')
     end
 
-    def self.get(uri, timeout)
-      ::URI.parse(uri).read(read_timeout: timeout)
+    def self.get(uri, timeout, api_secret)
+      options = {
+        http_basic_authentication: [api_secret, ''],
+        read_timeout: timeout
+      }
+      open(uri, options).read
     rescue OpenURI::HTTPError => error
       raise HTTPError, JSON.parse(error.io.read)['error']
     end

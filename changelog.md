@@ -1,4 +1,7 @@
-### v4.1.4
+### v4.2.0
+ * Switch to new authentication with BasicAuth
+
+ ### v4.1.4
  * Add timeout option: Merged PR #48
 
 ### v4.1.3
